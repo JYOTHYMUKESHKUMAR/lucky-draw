@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Lucky Draw</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            color: #333;
+        }
+        
+        .main-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .draw-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .control-panel {
+            width: 300px;
+            background-color: #f5f5f5;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: transform 0.5s ease;
+            overflow-y: auto;
+            border-left: 1px solid #ddd;
+            color: #333;
+        }
+        
+        .control-panel.hidden {
+            transform: translateX(100%);
+        }
+        
+        .toggle-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: #6a1b9a;
+        }
+        
+        .input-area {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            margin-bottom: 1rem;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            margin: 5px 0;
+            width: 100%;
+        }
+        
+        #mainStartBtn {
+            width: 200px;
+            margin: 20px auto;
+            font-size: 20px;
+            padding: 15px 30px;
+            background-color: #6a1b9a;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 15px rgba(255, 64, 129, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            }
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 10px;
+        }
+        
+        .logo {
+            width: 150px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .celebration-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6a1b9a;
+            margin-bottom: 20px;
+            text-align: center;
+            background-color: rgba(106, 27, 154, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        
+        .animation-area {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            height: 500px;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            background-color: #6a1b9a;
+            overflow: hidden;
+            border: 3px solid #4a148c;
+            box-shadow: 0 10px 20px rgba(106, 27, 154, 0.3);
+        }
+        
+        .name {
+            position: absolute;
+            display: inline-block;
+            color: white;
+            font-size: 20px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: scale(0);
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+        
+        .winner-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            background-color: rgba(74, 20, 140, 0.8);
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            z-index: 10;
+            opacity: 0;
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 1s;
+            text-align: center;
+        }
+        
+        .winner-display.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        
+        .balloon {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            border-radius: 50%;
+            opacity: 0;
+            bottom: -100px;
+            animation: floatUp 10s linear forwards;
+            background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.8) 5%, currentColor 60%);
+            transform-origin: bottom center;
+        }
+        
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(-100px) translateX(-20px) rotate(5deg);
+            }
+            30% {
+                transform: translateY(-300px) translateX(20px) rotate(-5deg);
+            }
+            50% {
+                transform: translateY(-500px) translateX(-30px) rotate(8deg);
+            }
+            70% {
+                transform: translateY(-700px) translateX(10px) rotate(-10deg);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(-900px) translateX(-10px) rotate(5deg);
+            }
+            100% {
+                transform: translateY(-1000px) translateX(0) rotate(0);
+                opacity: 0;
+            }
+        }
+        
+        .help-text {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            text-align: left;
+            color: #555;
+        }
+        
+        .reset-btn {
+            background-color: #7b1fa2;
+        }
+        
+        .toggle-preview-btn {
+            background-color: #4caf50;
+            margin-bottom: 20px;
+        }
+        
+        .previous-winners {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(106, 27, 154, 0.1);
+            border-radius: 5px;
+        }
+        
+        .previous-winners h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #6a1b9a;
+        }
+        
+        .previous-winners ul {
+            margin: 0;
+            padding-left: 20px;
+            text-align: left;
+            color: #6a1b9a;
+        }
+        
+        .balloon-string {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.7);
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .glitter {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #FFF;
+            top: -50px;
+            opacity: 0;
+            z-index: 9;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px gold;
+            animation: glitterFall 5s linear forwards;
+        }
+        
+        @keyframes glitterFall {
+            0% {
+                opacity: 0;
+                transform: translateY(0) rotate(0deg) scale(0.3);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(50px) rotate(45deg) scale(1);
+            }
+            20% {
+                transform: translateY(100px) rotate(90deg) scale(0.9);
+            }
+            30% {
+                transform: translateY(150px) rotate(135deg) scale(1.1);
+            }
+            40% {
+                transform: translateY(200px) rotate(180deg) scale(1);
+            }
+            50% {
+                transform: translateY(250px) rotate(225deg) scale(0.9);
+            }
+            60% {
+                transform: translateY(300px) rotate(270deg) scale(1.1);
+            }
+            70% {
+                transform: translateY(350px) rotate(315deg) scale(1);
+            }
+            80% {
+                transform: translateY(400px) rotate(360deg) scale(0.8);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(450px) rotate(405deg) scale(0.7);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(500px) rotate(450deg) scale(0.5);
+            }
+        }
+        
+        .star-glitter {
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            background: linear-gradient(135deg, gold, yellow, white);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="draw-container">
+            <div class="logo-container">
+                <div class="logo qri-logo">
+                    <!-- QRI Logo placeholder - replace with actual logo -->
+                    <img src="/api/placeholder/150/80" alt="Qatar Rehabilitation Institute Logo" id="qriLogo" />
+                </div>
+                <h1>🎉 Lucky Draw Animation 🎉</h1>
+                <div class="logo carf-logo">
+                    <!-- CARF Logo placeholder - replace with actual logo -->
+                    <img src="/api/placeholder/150/80" alt="CARF Accreditation Logo" id="carfLogo" />
+                </div>
+            </div>
+            <div class="celebration-text">
+                Qatar Rehabilitation Institute CARF Accreditation Celebration
+            </div>
+            <div class="animation-area" id="animationArea">
+                <div class="winner-display" id="winnerDisplay">
+                    <div>WINNER!</div>
+                    <div id="winnerName"></div>
+                </div>
+            </div>
+            <button class="btn" id="mainStartBtn">Start Animation</button>
+        </div>
+        
+        <div class="control-panel" id="controlPanel">
+            <h2>Control Panel</h2>
+            
+            <div class="input-area">
+                <p class="help-text">Enter names, one per line:</p>
+                <textarea id="nameInput" placeholder="John
+Jane
+Michael
+Sarah
+Alex
+..."></textarea>
+                
+                <p class="help-text">Animation duration (seconds):</p>
+                <input type="range" id="durationInput" min="3" max="15" value="7" step="1">
+                <div id="durationValue">7 seconds</div>
+                
+                <p class="help-text">Animation speed:</p>
+                <input type="range" id="speedInput" min="1" max="5" value="3" step="0.5">
+                <div id="speedValue">Normal (1x)</div>
+                
+                <button class="btn reset-btn" id="resetBtn">Reset</button>
+                
+                <div class="previous-winners" id="previousWinnersSection">
+                    <h3>Previous Winners:</h3>
+                    <ul id="previousWinnersList"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="toggle-panel" id="togglePanelBtn">👁️</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('nameInput');
+            const mainStartBtn = document.getElementById('mainStartBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const animationArea = document.getElementById('animationArea');
+            const winnerDisplay = document.getElementById('winnerDisplay');
+            const winnerName = document.getElementById('winnerName');
+            const togglePanelBtn = document.getElementById('togglePanelBtn');
+            const controlPanel = document.getElementById('controlPanel');
+            const durationInput = document.getElementById('durationInput');
+            const durationValue = document.getElementById('durationValue');
+            const speedInput = document.getElementById('speedInput');
+            const speedValue = document.getElementById('speedValue');
+            const previousWinnersList = document.getElementById('previousWinnersList');
+            
+            let animationRunning = false;
+            let nameElements = [];
+            let animationTimeout = null;
+            let animationSpeed = 1;
+            let drawnWinners = []; // Array to store winners who have been drawn already
+            
+            // Load sample names if input is empty
+            if (nameInput.value.trim() === '') {
+                nameInput.value = "John\nJane\nMichael\nSarah\nAlex\nEmma\nDavid\nSophia\nRobert\nOlivia";
+            }
+            
+            // Instructions for logo clicks
+            const qriLogo = document.getElementById('qriLogo');
+            const carfLogo = document.getElementById('carfLogo');
+            
+            qriLogo.title = "Click to upload QRI logo";
+            carfLogo.title = "Click to upload CARF logo";
+            
+            // Create file inputs for logo uploads
+            const qriLogoInput = document.createElement('input');
+            qriLogoInput.type = 'file';
+            qriLogoInput.accept = 'image/*';
+            qriLogoInput.style.display = 'none';
+            qriLogoInput.id = 'qriLogoInput';
+            document.body.appendChild(qriLogoInput);
+            
+            const carfLogoInput = document.createElement('input');
+            carfLogoInput.type = 'file';
+            carfLogoInput.accept = 'image/*';
+            carfLogoInput.style.display = 'none';
+            carfLogoInput.id = 'carfLogoInput';
+            document.body.appendChild(carfLogoInput);
+            
+            // Allow logo customization
+            qriLogo.addEventListener('click', function() {
+                qriLogoInput.click();
+            });
+            
+            carfLogo.addEventListener('click', function() {
+                carfLogoInput.click();
+            });
+            
+            qriLogoInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        qriLogo.src = event.target.result;
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            carfLogoInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        carfLogo.src = event.target.result;
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            // Load some sample names if input is empty
+            if (nameInput.value.trim() === '') {
+                nameInput.value = "John\nJane\nMichael\nSarah\nAlex\nEmma\nDavid\nSophia\nRobert\nOlivia";
+            }
+            
+            // Update duration value display
+            durationInput.addEventListener('input', function() {
+                durationValue.textContent = durationInput.value + ' seconds';
+            });
+            
+            // Update speed value display
+            speedInput.addEventListener('input', function() {
+                const speedVal = parseFloat(speedInput.value);
+                animationSpeed = speedVal;
+                
+                let speedText;
+                if (speedVal <= 1.5) {
+                    speedText = 'Slow';
+                } else if (speedVal <= 2.5) {
+                    speedText = 'Normal';
+                } else if (speedVal <= 3.5) {
+                    speedText = 'Fast';
+                } else if (speedVal <= 4.5) {
+                    speedText = 'Very Fast';
+                } else {
+                    speedText = 'Super Fast';
+                }
+                
+                speedValue.textContent = `${speedText} (${speedVal}x)`;
+                
+                // Update animation speeds in real-time if animation is running
+                if (animationRunning) {
+                    document.querySelectorAll('.name').forEach(el => {
+                        el.style.transition = `left ${0.7/animationSpeed}s ease-out, top ${0.7/animationSpeed}s ease-out`;
+                    });
+                    
+                    document.querySelectorAll('.balloon').forEach(el => {
+                        el.style.animationDuration = `${10/animationSpeed}s`;
+                    });
+                    
+                    document.querySelectorAll('.glitter').forEach(el => {
+                        el.style.animationDuration = `${5/animationSpeed}s`;
+                    });
+                }
+            });
+            
+            // Toggle control panel
+            togglePanelBtn.addEventListener('click', function() {
+                controlPanel.classList.toggle('hidden');
+                togglePanelBtn.textContent = controlPanel.classList.contains('hidden') ? '👁️' : '❌';
+            });
+            
+            function createNameElement(name, index, total) {
+                const nameEl = document.createElement('div');
+                nameEl.className = 'name';
+                nameEl.textContent = name;
+                
+                // Random position
+                const left = Math.random() * 80 + 10; // 10% to 90%
+                const top = Math.random() * 80 + 10;  // 10% to 90%
+                
+                nameEl.style.left = `${left}%`;
+                nameEl.style.top = `${top}%`;
+                
+                // Random color
+                const hue = Math.random() * 360;
+                nameEl.style.backgroundColor = `hsla(${hue}, 70%, 60%, 0.7)`;
+                
+                // Apply animation speed
+                nameEl.style.transition = `transform ${0.5/animationSpeed}s ease-out, opacity ${0.5/animationSpeed}s ease-out`;
+                
+                animationArea.appendChild(nameEl);
+                
+                // Staggered appearance
+                setTimeout(() => {
+                    nameEl.style.opacity = '1';
+                    nameEl.style.transform = 'scale(1)';
+                }, index * (100/animationSpeed));
+                
+                return nameEl;
+            }
+            
+            function animateNames() {
+                nameElements.forEach(el => {
+                    // Random movement
+                    const moveX = (Math.random() - 0.5) * 20;
+                    const moveY = (Math.random() - 0.5) * 20;
+                    
+                    const currentLeft = parseFloat(el.style.left);
+                    const currentTop = parseFloat(el.style.top);
+                    
+                    let newLeft = currentLeft + moveX;
+                    let newTop = currentTop + moveY;
+                    
+                    // Keep within bounds
+                    newLeft = Math.max(0, Math.min(90, newLeft));
+                    newTop = Math.max(0, Math.min(90, newTop));
+                    
+                    el.style.transition = `left ${0.7/animationSpeed}s ease-out, top ${0.7/animationSpeed}s ease-out`;
+                    el.style.left = `${newLeft}%`;
+                    el.style.top = `${newTop}%`;
+                });
+                
+                if (animationRunning) {
+                    animationTimeout = setTimeout(animateNames, 800/animationSpeed);
+                }
+            }
+            
+            function createBalloon() {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                
+                // Random position
+                const left = Math.random() * 90 + 5;
+                balloon.style.left = `${left}%`;
+                
+                // Random delay
+                const delay = Math.random() * 5 / animationSpeed;
+                balloon.style.animationDelay = `${delay}s`;
+                
+                // Animation duration adjusted by speed
+                balloon.style.animationDuration = `${10/animationSpeed}s`;
+                
+                // Random color
+                const colors = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA', '#69F0AE', '#B2FF59', '#EEFF41', '#FFFF00', '#FFD740', '#FFAB40', '#FF6E40'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                balloon.style.color = randomColor;
+                
+                // Random size
+                const size = Math.random() * 30 + 40;
+                balloon.style.width = `${size}px`;
+                balloon.style.height = `${size * 1.3}px`;
+                
+                // Add string to balloon
+                const string = document.createElement('div');
+                string.className = 'balloon-string';
+                balloon.appendChild(string);
+                
+                animationArea.appendChild(balloon);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (balloon.parentNode) {
+                        animationArea.removeChild(balloon);
+                    }
+                }, (10000 / animationSpeed) + (delay * 1000));
+            }
+            
+            function createGlitter() {
+                const glitter = document.createElement('div');
+                glitter.className = Math.random() > 0.3 ? 'glitter' : 'glitter star-glitter';
+                
+                // Random position
+                const left = Math.random() * 100;
+                glitter.style.left = `${left}%`;
+                
+                // Random delay
+                const delay = Math.random() * 3 / animationSpeed;
+                glitter.style.animationDelay = `${delay}s`;
+                
+                // Animation duration adjusted by speed
+                glitter.style.animationDuration = `${5/animationSpeed}s`;
+                
+                // Random size
+                const size = Math.random() * 10 + 5;
+                glitter.style.width = `${size}px`;
+                glitter.style.height = `${size}px`;
+                
+                // Random color
+                if (!glitter.classList.contains('star-glitter')) {
+                    const colors = ['gold', 'silver', '#FF4081', '#7C4DFF', '#18FFFF', '#B2FF59', '#FFD740'];
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    glitter.style.backgroundColor = randomColor;
+                    glitter.style.boxShadow = `0 0 10px 2px ${randomColor}`;
+                }
+                
+                animationArea.appendChild(glitter);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (glitter.parentNode) {
+                        animationArea.removeChild(glitter);
+                    }
+                }, (5000 / animationSpeed) + (delay * 1000));
+            }
+            
+            function createBalloons() {
+                for (let i = 0; i < 30; i++) {
+                    setTimeout(() => {
+                        createBalloon();
+                    }, i * (200/animationSpeed));
+                }
+            }
+            
+            function createGlitters() {
+                for (let i = 0; i < 100; i++) {
+                    setTimeout(() => {
+                        createGlitter();
+                    }, i * (50/animationSpeed));
+                }
+                
+                // Create more glitters for 5 seconds
+                const glitterInterval = setInterval(() => {
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            createGlitter();
+                        }, i * (200/animationSpeed));
+                    }
+                }, 1000/animationSpeed);
+                
+                setTimeout(() => {
+                    clearInterval(glitterInterval);
+                }, 5000/animationSpeed);
+            }
+            
+            function selectWinner() {
+                const names = nameElements.map(el => el.textContent);
+                
+                // Filter out names that have already been drawn
+                const availableNames = names.filter(name => !drawnWinners.includes(name));
+                
+                // Check if there are any names left to draw
+                if (availableNames.length === 0) {
+                    alert("All names have been drawn! Reset to start again.");
+                    return;
+                }
+                
+                // Select a winner from the available names
+                const winner = availableNames[Math.floor(Math.random() * availableNames.length)];
+                
+                // Add to drawn winners list
+                drawnWinners.push(winner);
+                
+                // Add to the previous winners display
+                const winnerItem = document.createElement('li');
+                winnerItem.textContent = winner;
+                previousWinnersList.appendChild(winnerItem);
+                
+                // Hide all names with stagger
+                nameElements.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.opacity = '0';
+                        el.style.transform = 'scale(0)';
+                    }, index * (50/animationSpeed));
+                });
+                
+                // Show winner after all names are hidden
+                setTimeout(() => {
+                    winnerName.textContent = winner;
+                    winnerDisplay.classList.add('show');
+                    createBalloons();
+                    createGlitters();
+                }, (nameElements.length * (50/animationSpeed)) + (300/animationSpeed));
+            }
+            
+            function startAnimation() {
+                if (animationRunning) return;
+                
+                const names = nameInput.value.trim().split('\n').filter(n => n.trim() !== '');
+                
+                if (names.length < 2) {
+                    alert('Please enter at least 2 names!');
+                    return;
+                }
+                
+                // Check if there are names left to draw
+                const availableNames = names.filter(name => !drawnWinners.includes(name));
+                if (availableNames.length === 0) {
+                    alert("All names have been drawn! Reset to start again.");
+                    return;
+                }
+                
+                // Hide control panel in presentation mode
+                controlPanel.classList.add('hidden');
+                togglePanelBtn.textContent = '👁️';
+                
+                // Reset
+                animationArea.innerHTML = '';
+                // Re-add winner display because we cleared the animation area
+                animationArea.appendChild(winnerDisplay);
+                winnerDisplay.classList.remove('show');
+                nameElements = [];
+                animationRunning = true;
+                
+                // Create name elements - only use names that haven't been drawn yet
+                availableNames.forEach((name, index) => {
+                    const nameEl = createNameElement(name, index, availableNames.length);
+                    nameElements.push(nameEl);
+                });
+                
+                // Animation duration from input
+                const animationDuration = parseInt(durationInput.value) * 1000 / animationSpeed;
+                
+                // Get speed from slider
+                animationSpeed = parseFloat(speedInput.value);
+                
+                // Start animation after all names appear
+                setTimeout(() => {
+                    animateNames();
+                    
+                    // Select winner after animation time
+                    setTimeout(() => {
+                        animationRunning = false;
+                        clearTimeout(animationTimeout);
+                        selectWinner();
+                    }, animationDuration);
+                }, (availableNames.length * (100/animationSpeed)) + (500/animationSpeed));
+            }
+            
+            // Main button under animation area
+            mainStartBtn.addEventListener('click', startAnimation);
+            
+            resetBtn.addEventListener('click', function() {
+                animationRunning = false;
+                clearTimeout(animationTimeout);
+                
+                // Remove balloons and names but keep the winner display element
+                const elementsToRemove = [...document.querySelectorAll('.name'), ...document.querySelectorAll('.balloon'), ...document.querySelectorAll('.glitter')];
+                elementsToRemove.forEach(el => {
+                    if (el.parentNode) {
+                        el.parentNode.removeChild(el);
+                    }
+                });
+                
+                winnerDisplay.classList.remove('show');
+                nameElements = [];
+                
+                // Ask if user wants to reset drawn winners list too
+                if (drawnWinners.length > 0) {
+                    if (confirm("Do you want to reset the winners list and start over with all names?")) {
+                        drawnWinners = [];
+                        previousWinnersList.innerHTML = '';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
