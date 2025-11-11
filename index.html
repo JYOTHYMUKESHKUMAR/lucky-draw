@@ -425,6 +425,91 @@ Alex
     
     <button class="toggle-panel" id="togglePanelBtn">👁️</button>
 
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        //---------------UPDATE HERE ---------------------//
+        // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyANRqOnpi5Nn86K46T0aLIwljHWCD8EQGo",
+            authDomain: "luckydraw-6bdfd.firebaseapp.com",
+            projectId: "luckydraw-6bdfd",
+            storageBucket: "luckydraw-6bdfd.firebasestorage.app",
+            messagingSenderId: "894672080723",
+            appId: "1:894672080723:web:b481c01104e723baf99ba6",
+            measurementId: "G-V9THHY8KMH"
+        };
+
+        // Initialize Firebase and Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Save winner (modular addDoc)
+        export async function saveWinner(name) {
+            try {
+                await addDoc(collection(db, "results"), {
+                    name: name,
+                    date: new Date().toISOString()
+                });
+                console.log("Winner saved:", name);
+                return true;
+            } catch (err) {
+                console.error("Error saving winner:", err);
+                return false;
+            }
+        }
+
+        // Load winners once (optional)
+        export async function loadWinnersOnce(renderCallback) {
+            const q = query(collection(db, "results"), orderBy("date", "desc"));
+            const snap = await getDocs(q);
+            const rows = [];
+            snap.forEach(doc => rows.push(doc.data()));
+            if (typeof renderCallback === "function") renderCallback(rows);
+            return rows;
+        }
+
+        // Real-time listener: call renderCallback(snapshotArray)
+        export function listenWinnersRealtime(renderCallback) {
+            const q = query(collection(db, "results"), orderBy("date", "desc"));
+            return onSnapshot(q, snapshot => {
+            const rows = [];
+            snapshot.forEach(doc => rows.push(doc.data()));
+            if (typeof renderCallback === "function") renderCallback(rows);
+            }, err => {
+            console.error("Realtime listener error:", err);
+            });
+        }
+
+        // Example: auto-populate previousWinnersList if that element exists
+        document.addEventListener("DOMContentLoaded", () => {
+            const previousWinnersList = document.getElementById("previousWinnersList");
+            if (!previousWinnersList) return;
+
+            // realtime update
+            listenWinnersRealtime((rows) => {
+            previousWinnersList.innerHTML = "";
+            rows.forEach(r => {
+                const li = document.createElement("li");
+                li.textContent = `${r.name} (${new Date(r.date).toLocaleString()})`;
+                previousWinnersList.appendChild(li);
+            });
+            });
+        });
+
+        window.saveWinner = saveWinner;
+    </script>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const nameInput = document.getElementById('nameInput');
@@ -717,45 +802,47 @@ Alex
                     clearInterval(glitterInterval);
                 }, 5000/animationSpeed);
             }
-            
-            function selectWinner() {
+
+            async function selectWinner() {
                 const names = nameElements.map(el => el.textContent);
-                
+
                 // Filter out names that have already been drawn
                 const availableNames = names.filter(name => !drawnWinners.includes(name));
-                
-                // Check if there are any names left to draw
+
                 if (availableNames.length === 0) {
                     alert("All names have been drawn! Reset to start again.");
                     return;
                 }
-                
-                // Select a winner from the available names
+
+                // Select a random winner
                 const winner = availableNames[Math.floor(Math.random() * availableNames.length)];
-                
-                // Add to drawn winners list
+
+                // Add locally
                 drawnWinners.push(winner);
-                
-                // Add to the previous winners display
-                const winnerItem = document.createElement('li');
-                winnerItem.textContent = winner;
-                previousWinnersList.appendChild(winnerItem);
-                
-                // Hide all names with stagger
+
+                try {
+                    //await saveWinner(winner); // or await addDoc(collection(db,'results'), { ... })
+                    await window.saveWinner(winner);
+                    console.log("Winner saved to Firebase:", winner);
+                } catch (err) {
+                    console.error("Error saving winner:", err);
+                }
+
+                // Hide all names visually
                 nameElements.forEach((el, index) => {
                     setTimeout(() => {
-                        el.style.opacity = '0';
-                        el.style.transform = 'scale(0)';
-                    }, index * (50/animationSpeed));
+                    el.style.opacity = '0';
+                    el.style.transform = 'scale(0)';
+                    }, index * (50 / animationSpeed));
                 });
-                
-                // Show winner after all names are hidden
+
+                // Show final winner
                 setTimeout(() => {
                     winnerName.textContent = winner;
                     winnerDisplay.classList.add('show');
                     createBalloons();
                     createGlitters();
-                }, (nameElements.length * (50/animationSpeed)) + (300/animationSpeed));
+                }, (nameElements.length * (50 / animationSpeed)) + (300 / animationSpeed));
             }
             
             function startAnimation() {
